@@ -23,5 +23,7 @@ alter table public.documents add column if not exists chunks jsonb not null defa
 alter table public.documents add column if not exists scanned_likely boolean not null default false;
 alter table public.documents add column if not exists total_extracted_chars integer not null default 0;
 alter table public.documents add column if not exists non_empty_pages integer not null default 0;
+alter table public.documents add column if not exists summary text;
+alter table public.documents add column if not exists summary_updated_at timestamptz;
 
 create index if not exists documents_created_at_idx on public.documents (created_at desc);

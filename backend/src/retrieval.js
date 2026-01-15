@@ -68,7 +68,27 @@ export function buildTfidfIndex(chunks) {
   };
 }
 
-export function searchTfidf(index, chunks, query, topK = 5) {
+function clipText(text, maxChars) {
+  if (!text) return '';
+  if (!maxChars || maxChars <= 0) return text;
+  if (text.length <= maxChars) return text;
+  return text.slice(0, Math.max(0, maxChars - 1)) + '…';
+}
+
+/**
+ * Backward-compatible:
+ * - searchTfidf(index, chunks, query, 5)
+ * - searchTfidf(index, chunks, query, { topK, maxChunkChars, maxTotalChars, minScore })
+ */
+export function searchTfidf(index, chunks, query, opts = 5) {
+  const options = typeof opts === 'number' ? { topK: opts } : (opts || {});
+  const {
+    topK = 5,
+    minScore = -Infinity,
+    maxChunkChars = 1400,
+    maxTotalChars = 9000,
+  } = options;
+
   const qTokens = tokenize(query);
   const qTf = buildTf(qTokens);
 
@@ -83,5 +103,35 @@ export function searchTfidf(index, chunks, query, topK = 5) {
   const scored = index.vectors.map((v, i) => ({ i, score: dot(q, v) }));
   scored.sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, Math.max(1, topK)).map(({ i, score }) => ({ chunk: chunks[i], score }));
+  const results = [];
+  let used = 0;
+  for (const { i, score } of scored) {
+    if (results.length >= Math.max(1, topK)) break;
+    if (score < minScore) continue;
+
+    const chunk = chunks[i];
+    if (!chunk) continue;
+
+    const remaining = Math.max(0, maxTotalChars - used);
+    if (remaining <= 0) break;
+
+    const allowance = Math.min(maxChunkChars, remaining);
+    const excerpt = clipText(chunk.text || '', allowance);
+    if (!excerpt) continue;
+
+    used += excerpt.length;
+    results.push({ chunk: { ...chunk, text: excerpt }, score });
+  }
+
+  // Best-effort guarantee of at least one result.
+  if (results.length === 0 && scored.length > 0) {
+    const best = scored[0];
+    const chunk = chunks[best.i];
+    if (chunk) {
+      const excerpt = clipText(chunk.text || '', Math.min(maxChunkChars, maxTotalChars));
+      results.push({ chunk: { ...chunk, text: excerpt }, score: best.score });
+    }
+  }
+
+  return results;
 }

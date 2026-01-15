@@ -89,6 +89,8 @@ export class DocumentStore {
         scanned_likely: doc.scannedLikely,
         total_extracted_chars: doc.totalExtractedChars,
         non_empty_pages: doc.nonEmptyPages,
+        summary: doc.summary ?? null,
+        summary_updated_at: doc.summaryUpdatedAt ?? null,
       },
       {
         id: doc.id,
@@ -100,6 +102,8 @@ export class DocumentStore {
         scannedLikely: doc.scannedLikely,
         totalExtractedChars: doc.totalExtractedChars,
         nonEmptyPages: doc.nonEmptyPages,
+        summary: doc.summary ?? null,
+        summaryUpdatedAt: doc.summaryUpdatedAt ?? null,
       },
       {
         id: doc.id,
@@ -157,6 +161,8 @@ export class DocumentStore {
       scannedLikely: !!pick(data, ['scanned_likely', 'scannedLikely', 'scannedlikely'], false),
       totalExtractedChars: pick(data, ['total_extracted_chars', 'totalExtractedChars', 'totalextractedchars'], 0),
       nonEmptyPages: pick(data, ['non_empty_pages', 'nonEmptyPages', 'nonemptypages'], 0),
+      summary: pick(data, ['summary'], null),
+      summaryUpdatedAt: pick(data, ['summary_updated_at', 'summaryUpdatedAt', 'summaryupdatedat'], null),
     };
 
     doc.index = buildTfidfIndex(doc.chunks);
