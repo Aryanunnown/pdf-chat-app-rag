@@ -94,6 +94,33 @@ textarea {
   gap: 4px;
 }
 
+.uploadProgress {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uploadProgressRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.progressFill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, rgba(122, 162, 247, 0.95), rgba(158, 206, 106, 0.95));
+}
+
 .muted {
   color: rgba(255, 255, 255, 0.65);
   font-size: 13px;
@@ -245,6 +272,58 @@ textarea {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.compareModeRow {
+  margin: 10px 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.compareStructured {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.compareTableWrap {
+  overflow: auto;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.compareTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.compareTable th,
+.compareTable td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 10px;
+  vertical-align: top;
+}
+
+.compareTable th {
+  text-align: left;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compareTopic {
+  font-weight: 700;
+}
+
+.compareVerdict {
+  text-transform: uppercase;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .compareResult {

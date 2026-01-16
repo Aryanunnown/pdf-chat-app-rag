@@ -1,3 +1,4 @@
+import { API_DEFAULTS } from './constants';
 export type DocumentSummary = {
   id: string;
   name: string;
@@ -17,7 +18,33 @@ export type ChatSource = {
   excerpt: string;
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+export type CompareMode = 'content' | 'methodology' | 'conclusions' | 'structure' | 'literal' | 'custom';
+
+export type CompareTopicVerdict = 'same' | 'different' | 'onlyA' | 'onlyB' | 'unclear';
+
+export type CompareStructured = {
+  mode: CompareMode;
+  task: string;
+  topics: {
+    topic: string;
+    docA: string;
+    docB: string;
+    verdict: CompareTopicVerdict;
+    notes?: string;
+  }[];
+  summary?: string;
+};
+
+export type CompareResponse = {
+  answer: string;
+  mode?: CompareMode;
+  task?: string;
+  structured?: CompareStructured | null;
+  sourcesA: ChatSource[];
+  sourcesB: ChatSource[];
+};
+
+const API_URL = API_DEFAULTS.BASE_URL;
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -40,18 +67,47 @@ export async function listDocuments(): Promise<DocumentSummary[]> {
   return data.documents;
 }
 
-export async function uploadPdf(file: File): Promise<DocumentSummary> {
+export type UploadPdfOptions = {
+  onProgress?: (percent: number) => void;
+};
+
+export async function uploadPdf(file: File, options?: UploadPdfOptions): Promise<DocumentSummary> {
   const form = new FormData();
   form.append('file', file);
 
-  const res = await fetch(`${API_URL}/api/documents`, { method: 'POST', body: form });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Upload failed: ${res.status}`);
-  }
+  return await new Promise<DocumentSummary>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_URL}/api/documents`);
 
-  const data = (await res.json()) as { document: DocumentSummary };
-  return data.document;
+    xhr.upload.onprogress = (evt) => {
+      if (!evt.lengthComputable) return;
+      const percent = Math.round((evt.loaded / evt.total) * 100);
+      options?.onProgress?.(percent);
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+
+    xhr.onload = () => {
+      try {
+        const raw = xhr.responseText || '';
+        if (xhr.status < 200 || xhr.status >= 300) {
+          reject(new Error(raw || `Upload failed: ${xhr.status}`));
+          return;
+        }
+
+        const data = (raw ? JSON.parse(raw) : {}) as { document?: DocumentSummary };
+        if (!data.document) {
+          reject(new Error('Upload failed: invalid response'));
+          return;
+        }
+        resolve(data.document);
+      } catch {
+        reject(new Error('Upload failed: invalid JSON response'));
+      }
+    };
+
+    xhr.send(form);
+  });
 }
 
 export async function chat(docId: string, messages: { role: 'user' | 'assistant'; content: string }[], question: string) {
@@ -61,9 +117,9 @@ export async function chat(docId: string, messages: { role: 'user' | 'assistant'
   });
 }
 
-export async function compare(docIdA: string, docIdB: string, prompt: string) {
-  return await http<{ answer: string; sourcesA: ChatSource[]; sourcesB: ChatSource[] }>('/api/compare', {
+export async function compare(docIdA: string, docIdB: string, prompt: string, mode?: CompareMode): Promise<CompareResponse> {
+  return await http<CompareResponse>('/api/compare', {
     method: 'POST',
-    body: JSON.stringify({ docIdA, docIdB, prompt }),
+    body: JSON.stringify({ docIdA, docIdB, prompt, mode }),
   });
 }
