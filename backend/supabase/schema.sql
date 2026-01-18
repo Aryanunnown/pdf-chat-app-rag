@@ -26,4 +26,11 @@ alter table public.documents add column if not exists non_empty_pages integer no
 alter table public.documents add column if not exists summary text;
 alter table public.documents add column if not exists summary_updated_at timestamptz;
 
+-- Optional: store where the raw PDF is kept in Supabase Storage.
+alter table public.documents add column if not exists storage_bucket text;
+alter table public.documents add column if not exists storage_path text;
+alter table public.documents add column if not exists storage_mime text;
+alter table public.documents add column if not exists storage_bytes integer;
+alter table public.documents add column if not exists storage_updated_at timestamptz;
+
 create index if not exists documents_created_at_idx on public.documents (created_at desc);
