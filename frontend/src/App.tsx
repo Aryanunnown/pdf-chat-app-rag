@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import './App.css'
@@ -68,6 +68,17 @@ function App() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [question, setQuestion] = useState('')
+
+  const chatEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (mode !== 'chat') return
+    // Defer to ensure DOM updates are painted before scrolling.
+    const id = window.requestAnimationFrame(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [mode, messages.length, thinkingChat])
 
   const [docA, setDocA] = useState('')
   const [docB, setDocB] = useState('')
@@ -319,6 +330,8 @@ function App() {
                     <div className="msgContent muted">Thinking…</div>
                   </div>
                 ) : null}
+
+                <div ref={chatEndRef} />
               </div>
 
               <div className="composer">
